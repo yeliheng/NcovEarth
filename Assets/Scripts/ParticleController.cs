@@ -17,6 +17,7 @@ public class ParticleController : MonoBehaviour {
     public const int LEVEL_HIGH = 1000;//严重
     protected float lat;//纬度
     protected float lng;//经度
+    public GameObject cube;//测试
     void Start () {
         StartCoroutine(renderData());
        
@@ -58,7 +59,7 @@ public class ParticleController : MonoBehaviour {
         this.setParticle(total);
         /*其他国家*/
         
-        StartCoroutine(posTransform("中国"));
+        StartCoroutine(getPosFromServer("韩国"));
     }
 
 
@@ -90,13 +91,12 @@ public class ParticleController : MonoBehaviour {
     * 直径700,一份87.5，对应180 半径350
     * 比如中国的： https://google.cn/maps/api/geocode/json?address=%E4%B8%AD%E5%9B%BD&key=AIzaSyCM9K-fqdpiaYdf580-MSoF-J6eBM3xllc
     */
-    private IEnumerator posTransform(string address)
+    private IEnumerator getPosFromServer(string address)
     {
        // WWWForm form;
         WWW hostObj;
         //构建数据
         KeyUtil keyObj = new KeyUtil();
-
         hostObj = new WWW("https://google.cn/maps/api/geocode/json?address=" + address + "&key=" + keyObj.getKey());
         while (!hostObj.isDone)
         {
@@ -111,7 +111,15 @@ public class ParticleController : MonoBehaviour {
         float lat = float.Parse(location["lat"].ToString());
         float lng = float.Parse(location["lng"].ToString());
         Debug.Log("国家: " + address + " 纬度: " + lat + " 经度: " + lng);
+       // cube = GetComponent<GameObject>();
+        posTransform(lat,lng,cube);
     }
 
-
+    //坐标转换测试(成功) 2020-03-06 14:20:35
+    private void posTransform(float lat,float lng,GameObject cube) 
+    {
+        int r = 350;
+        //cube.transform.position = new Vector3(-z,x,y);
+       cube.transform.position = Quaternion.AngleAxis(lng, -Vector3.up) * Quaternion.AngleAxis(lat, -Vector3.right) * new Vector3(0, 0, r);
+    }
 }
