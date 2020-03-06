@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts;
 using LitJson;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,17 +13,15 @@ using UnityEngine;
 public class ParticleController : MonoBehaviour {
     [SerializeField] private int total;
     public int proportion = 10;
-    public const int LEVEL_LOW = 10;//轻度地区
-    public const int LEVEL_MIDDLE = 100;//中度
-    public const int LEVEL_HIGH = 1000;//严重
+    public const int LEVEL_LOW = 5;//轻度地区
+    public const int LEVEL_MIDDLE = 20;//中度
+    public const int LEVEL_HIGH = 100;//严重
     protected float lat;//纬度
     protected float lng;//经度
-    public GameObject cube;//测试
+    public GameObject earth;//地球对象
+    public Material parMat;//粒子材质
     void Start () {
-        StartCoroutine(renderData());
-       
-
-
+        StartCoroutine(getNcovDetail());
         // em.type = ParticleSystemEmissionType.Time;
 
         /*                em.SetBursts(
@@ -35,7 +34,7 @@ public class ParticleController : MonoBehaviour {
     void Update () {	
 	}
 
-    private IEnumerator renderData()
+    private IEnumerator getNcovDetail()
     {
         WWWForm form;
         WWW hostObj;
@@ -54,10 +53,17 @@ public class ParticleController : MonoBehaviour {
         JsonData raw = JsonMapper.ToObject(hostObj.text);
         string json = raw[1].ToString();
         JsonData data = JsonMapper.ToObject(json);//data字段数据
+        JsonData province = JsonMapper.ToObject(data["areaTree"][0]["children"].ToJson());
+        for(int i = 0; i < province.Count; i++)
+        {
+            int proTotal = int.Parse(province[i]["total"]["confirm"].ToString()) / proportion;
+            getPosFromFile(province[i]["name"].ToString(), proTotal); 
+        }
         //中国比较特殊，先获取中国
          total = int.Parse(data["chinaTotal"][0].ToString()) / proportion;
         Debug.Log("中国确诊总数:" + data["chinaTotal"][0].ToString());
-        this.setParticle(total);
+        //专门针对中国获取一个
+       //this.getPosFromFile("中国", total);
         /*-----------------国外-----------------*/
         WWW foreignHostObj = new WWW("https://view.inews.qq.com/g2/getOnsInfo?name=disease_other");
         /*遍历所有国家*/
@@ -77,41 +83,46 @@ public class ParticleController : MonoBehaviour {
        for(int i = 0; i < foreignList.Count; i++)
         {
             Debug.Log("国家名称: " + foreignList[i]["name"] + " 确诊人数: " + foreignList[i]["confirm"]);
-            StartCoroutine(foreignList[i]["name"].ToString());
+            //从服务器获取(暂时弃用)
+            // StartCoroutine(getPosFromServer(foreignList[i]["name"].ToString(),int.Parse(foreignList[i]["confirm"].ToString())));
+            //从本地文件获取
+            total = int.Parse(foreignList[i]["confirm"].ToString()) / proportion;
+            getPosFromFile(foreignList[i]["name"].ToString(), total);
         }
         
     }
 
 
-    private void setParticle(int total)
+    private void setParticle(int total,ParticleSystem ps)
     {
-        ParticleSystem ps = GetComponent<ParticleSystem>();
-        ps.Play();
         var main = ps.main;
+        main.playOnAwake = false;
+        main.startSize = 5;
+        //ps.Play();  
+        ps.gameObject.GetComponent<ParticleSystemRenderer>().material = parMat;
+
          if (total < LEVEL_LOW || total > LEVEL_LOW && total < LEVEL_MIDDLE)
         {
-            main.startColor = Color.white;
+           main.startColor = new Color(255,255,255);
         }
         else if (total > LEVEL_MIDDLE && total < LEVEL_HIGH)
         {
-            main.startColor = Color.yellow;
+            main.startColor = new Color(255,255,0);
         }
         else
         {
-            main.startColor = Color.red;
+            main.startColor = new Color(255,0,0);
         }
         main.maxParticles = total;
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
         var em = ps.emission;
         em.enabled = true;
+        ps.Play();
     }
 
-    /**
-    * 经纬度转换，试试看
-    * 思路:以y = 0为赤道，计算球体大小，依次向上叠加
-    * 直径700,一份87.5，对应180 半径350
-    * 
-    */
-    private IEnumerator getPosFromServer(string address)
+    //从服务器获取经纬度数据(后期做缓存)
+    private IEnumerator getPosFromServer(string address,int total)
     {
        // WWWForm form;
         WWW hostObj;
@@ -131,15 +142,60 @@ public class ParticleController : MonoBehaviour {
         float lat = float.Parse(location["lat"].ToString());
         float lng = float.Parse(location["lng"].ToString());
         Debug.Log("国家: " + address + " 纬度: " + lat + " 经度: " + lng);
-       // cube = GetComponent<GameObject>();
-        posTransform(lat,lng,cube);
+        //开始进行数据渲染
+        // earth = this.gameObject;
+        GameObject gameObject = new GameObject();
+        //gameObject.name = address;
+        gameObject.transform.parent = transform;
+        ParticleSystem ps = gameObject.AddComponent<ParticleSystem>();
+        var main = ps.main;
+        main.playOnAwake = false;
+        renderData(lat,lng,ps,total);
+        //posTransform(lat,lng,cube);
+    }
+
+    //从本地获取经纬度数据
+    private void getPosFromFile(string address, int total)
+    {
+        string content = System.IO.File.ReadAllText(@"./Assets/Scripts/countries.json");
+        JsonData raw = JsonMapper.ToObject(content);
+        try
+        {
+            float lng = float.Parse(raw[address][0].ToString());
+            float lat = float.Parse(raw[address][1].ToString());
+           // Debug.Log("国家: " + address + " 经度: " + lng + " 纬度: " + lat);
+            GameObject gameObject = new GameObject(address);
+            gameObject.transform.parent = transform;
+            ParticleSystem ps = gameObject.AddComponent<ParticleSystem>();
+            ps.Stop();
+            renderData(lat, lng, ps, total);
+
+        }
+        catch(Exception e)
+        {
+            Debug.LogError("没有找到国家: " + address);
+        }
+        
+
+            
     }
 
     //坐标转换测试(成功) 2020-03-06 14:20:35
-    private void posTransform(float lat,float lng,GameObject cube) 
+    private void posTransformTest(float lat,float lng,GameObject cube) 
     {
         int r = 350;
         //cube.transform.position = new Vector3(-z,x,y);
        cube.transform.position = Quaternion.AngleAxis(lng, -Vector3.up) * Quaternion.AngleAxis(lat, -Vector3.right) * new Vector3(0, 0, r);
+    }
+
+    /*数据渲染*/
+    private void renderData(float lat, float lng, ParticleSystem ps,int total)
+    {
+        int r = 350;
+       // ps = GetComponent<ParticleSystem>();
+        ps.transform.position = Quaternion.AngleAxis(lng, -Vector3.up) * Quaternion.AngleAxis(lat, -Vector3.right) * new Vector3(0, 0, r); 
+        //var em = ps.emission;
+        setParticle(total, ps);
+
     }
 }
