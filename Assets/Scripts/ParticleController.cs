@@ -53,13 +53,33 @@ public class ParticleController : MonoBehaviour {
         }
         JsonData raw = JsonMapper.ToObject(hostObj.text);
         string json = raw[1].ToString();
-        JsonData data = JsonMapper.ToObject(json);
+        JsonData data = JsonMapper.ToObject(json);//data字段数据
+        //中国比较特殊，先获取中国
          total = int.Parse(data["chinaTotal"][0].ToString()) / proportion;
         Debug.Log("中国确诊总数:" + data["chinaTotal"][0].ToString());
         this.setParticle(total);
-        /*其他国家*/
+        /*-----------------国外-----------------*/
+        WWW foreignHostObj = new WWW("https://view.inews.qq.com/g2/getOnsInfo?name=disease_other");
+        /*遍历所有国家*/
+        while (!foreignHostObj.isDone)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        if (foreignHostObj.error != null)
+        {
+            Debug.LogError(foreignHostObj.error);
+        }
+        JsonData foreignRaw = JsonMapper.ToObject(foreignHostObj.text);
+        JsonData foreignData = JsonMapper.ToObject(foreignRaw[1].ToString());
+        JsonData foreignList = JsonMapper.ToObject(foreignData["foreignList"].ToJson());
         
-        StartCoroutine(getPosFromServer("韩国"));
+      //  Debug.Log(foreignData.Count);
+       for(int i = 0; i < foreignList.Count; i++)
+        {
+            Debug.Log("国家名称: " + foreignList[i]["name"] + " 确诊人数: " + foreignList[i]["confirm"]);
+            StartCoroutine(foreignList[i]["name"].ToString());
+        }
+        
     }
 
 
@@ -89,7 +109,7 @@ public class ParticleController : MonoBehaviour {
     * 经纬度转换，试试看
     * 思路:以y = 0为赤道，计算球体大小，依次向上叠加
     * 直径700,一份87.5，对应180 半径350
-    * 比如中国的： https://google.cn/maps/api/geocode/json?address=%E4%B8%AD%E5%9B%BD&key=AIzaSyCM9K-fqdpiaYdf580-MSoF-J6eBM3xllc
+    * 
     */
     private IEnumerator getPosFromServer(string address)
     {
