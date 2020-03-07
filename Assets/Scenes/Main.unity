@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.23236749, g: 0.23554096, b: 0.2723016, a: 1}
+  m_IndirectSpecularColor: {r: 0.23236936, g: 0.23559299, b: 0.2723422, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -89,7 +89,8 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaIndirect: 2
     m_PVRFilteringAtrousPositionSigmaAO: 1
     m_ShowResolutionOverlay: 1
-  m_LightingDataAsset: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000002, guid: 7e4f843a90af44346b379ded6179529a,
+    type: 2}
   m_UseShadowmask: 1
 --- !u!196 &4
 NavMeshSettings:
@@ -378,6 +379,11 @@ Prefab:
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 23508738183384996, guid: ecb2338e5e76d5a43a826a3875366548,
+        type: 2}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 0af83cd0ed392624eaf67205eea080d9, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ecb2338e5e76d5a43a826a3875366548, type: 2}
   m_IsPrefabParent: 0
@@ -397,7 +403,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09bf64efd7ef4404a9453055cde5f7c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  angleVelocity: {x: 0, y: 10, z: 0}
+  angleVelocity: {x: 0, y: 1, z: 0}
 --- !u!135 &1513577841
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -425,17 +431,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &1513577843
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1513577839}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e4b47c8c8e4d0e47953b0d406c7f1c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1513577845
 MonoBehaviour:
   m_ObjectHideFlags: 0

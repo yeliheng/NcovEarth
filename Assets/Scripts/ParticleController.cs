@@ -173,7 +173,7 @@ public class ParticleController : MonoBehaviour {
         }
         catch(Exception e)
         {
-            Debug.LogError("没有找到国家: " + address);
+            Debug.LogWarning("没有找到国家: " + address);
         }
         
 
