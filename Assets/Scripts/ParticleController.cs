@@ -20,6 +20,7 @@ public class ParticleController : MonoBehaviour {
     protected float lng;//经度
     public GameObject earth;//地球对象
     public Material parMat;//粒子材质
+    private string countriesJSON;//国家的json
     void Start () {
         StartCoroutine(getNcovDetail());
         // em.type = ParticleSystemEmissionType.Time;
@@ -29,6 +30,12 @@ public class ParticleController : MonoBehaviour {
                                 new ParticleSystem.Burst(0.1f, 1000),
                             });*/
         // em.SetBurst(1,new ParticleSystem.Burst(1f,1000));
+
+        //Debug.Log(text.ToString());
+        //读取Bundle中的资源
+        AssetBundle ab = AssetBundle.LoadFromFile(Application.streamingAssetsPath + "/countries.bundle");
+        TextAsset text = ab.LoadAsset<TextAsset>("countries.json");
+        countriesJSON = text.ToString();
     }
 
     void Update () {	
@@ -157,7 +164,8 @@ public class ParticleController : MonoBehaviour {
     //从本地获取经纬度数据
     private void getPosFromFile(string address, int total)
     {
-        string content = System.IO.File.ReadAllText(@"./Assets/Scripts/countries.json");
+
+        string content = countriesJSON;
         JsonData raw = JsonMapper.ToObject(content);
         try
         {
@@ -196,6 +204,5 @@ public class ParticleController : MonoBehaviour {
         ps.transform.position = Quaternion.AngleAxis(lng, -Vector3.up) * Quaternion.AngleAxis(lat, -Vector3.right) * new Vector3(0, 0, r); 
         //var em = ps.emission;
         setParticle(total, ps);
-
     }
 }
