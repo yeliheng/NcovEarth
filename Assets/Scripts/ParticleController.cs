@@ -21,17 +21,8 @@ public class ParticleController : MonoBehaviour {
     public GameObject earth;//地球对象
     public Material parMat;//粒子材质
     private string countriesJSON;//国家的json
-    void Start () {
-        StartCoroutine(getNcovDetail());
-        // em.type = ParticleSystemEmissionType.Time;
-
-        /*                em.SetBursts(
-                            new ParticleSystem.Burst[]{
-                                new ParticleSystem.Burst(0.1f, 1000),
-                            });*/
-        // em.SetBurst(1,new ParticleSystem.Burst(1f,1000));
-
-        //Debug.Log(text.ToString());
+    void Awake () {
+        StartCoroutine(getNcovDetail());;
         //读取Bundle中的资源
         AssetBundle ab = AssetBundle.LoadFromFile(Application.streamingAssetsPath + "/countries.bundle");
         TextAsset text = ab.LoadAsset<TextAsset>("countries.json");

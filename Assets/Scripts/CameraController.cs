@@ -3,7 +3,7 @@
 public class CameraController : MonoBehaviour
 {
     public Transform target;//获取旋转目标
-    public int speed = 10;
+    public int speed = 5;
     //平滑跟随速度
     private float xVelocity = 1f;
     private float yVelocity = 1f;
