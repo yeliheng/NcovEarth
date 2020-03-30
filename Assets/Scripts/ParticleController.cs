@@ -38,8 +38,8 @@ public class ParticleController : MonoBehaviour {
         WWW hostObj;
         //构建数据
         form = new WWWForm();
-        form.AddField("name", "disease_h5");
-        hostObj = new WWW("https://view.inews.qq.com/g2/getOnsInfo", form);
+        //form.AddField("name", "disease_h5");
+        hostObj = new WWW("http://api.fengyelab.com/api/NcovJsonGetter.php?name=disease_h5");
         while (!hostObj.isDone)
         {
             yield return new WaitForEndOfFrame();
@@ -63,7 +63,8 @@ public class ParticleController : MonoBehaviour {
         //专门针对中国获取一个
        //this.getPosFromFile("中国", total);
         /*-----------------国外-----------------*/
-        WWW foreignHostObj = new WWW("https://view.inews.qq.com/g2/getOnsInfo?name=disease_other");
+
+        WWW foreignHostObj = new WWW("http://api.fengyelab.com/api/NcovJsonGetter.php?name=disease_foreign");
         /*遍历所有国家*/
         while (!foreignHostObj.isDone)
         {

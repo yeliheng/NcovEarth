@@ -1,5 +1,10 @@
 ﻿using UnityEngine;
 
+/*
+ * 2020-03-08
+ * 摄影机围绕目标物体(仿谷歌地球)
+ * Written By Yeliheng
+ */
 public class CameraController : MonoBehaviour
 {
     public Transform target;//获取旋转目标
@@ -31,8 +36,6 @@ public class CameraController : MonoBehaviour
         //左键
         if (Input.GetKey(KeyCode.Mouse0))
         {
-           // mouse_x = Mathf.SmoothDampAngle(mouse_x, target.transform.position.x, ref xVelocity, 1f);
-           // mouse_y = Mathf.SmoothDampAngle(mouse_y, target.transform.position.y, ref yVelocity, 1f);
            // Debug.Log("X轴:" + mouse_x + " Y: " + mouse_y);
             transform.RotateAround(target.transform.position, Vector3.up, mouse_x * 1.5f);
             transform.RotateAround(target.transform.position, transform.right, mouse_y * 1.5f);
