@@ -4,14 +4,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 /*
- * 2020-03-03
- * 粒子系统控制
- * Written By Yeliheng
- */
+* 2020-03-03
+* 粒子系统控制
+* Written By Yeliheng
+*/
 
 public class ParticleController : MonoBehaviour {
-    [SerializeField] private int total;
+    private int total;
+    [SerializeField] private int chinaTotal = 0;//中国确诊
+    [SerializeField] private int foreignTotal = 0;//海外确诊
+    
     public int proportion = 10;
     public const int LEVEL_LOW = 5;//轻度地区
     public const int LEVEL_MIDDLE = 20;//中度
@@ -21,12 +25,94 @@ public class ParticleController : MonoBehaviour {
     public GameObject earth;//地球对象
     public Material parMat;//粒子材质
     private string countriesJSON;//国家的json
+    public Text worldText;
+    //public Canvas loader;//场景加载
+
+
     void Awake () {
-        StartCoroutine(getNcovDetail());;
+
         //读取Bundle中的资源
+#if UNITY_STANDALONE_WIN
+        StartCoroutine(getNcovDetail());
         AssetBundle ab = AssetBundle.LoadFromFile(Application.streamingAssetsPath + "/countries.bundle");
         TextAsset text = ab.LoadAsset<TextAsset>("countries.json");
         countriesJSON = text.ToString();
+
+#elif UNITY_ANDROID
+        StartCoroutine(getNcovDetail());
+        AssetBundle ab = AssetBundle.LoadFromFile(Application.streamingAssetsPath + "/countries_Android.bundle");
+        TextAsset text = ab.LoadAsset<TextAsset>("countries.json");
+        countriesJSON = text.ToString();
+#elif UNITY_WEBGL
+        //AssetBundle ab = AssetBundle.LoadFromFile(Application.streamingAssetsPath + "/countries_web.bundle");
+        StartCoroutine(getNcovDetailUsingWebGL());
+#endif        
+
+    }
+
+    /*
+     * 用WebGL的方式获取疫情数据
+     */
+    private IEnumerator getNcovDetailUsingWebGL()
+    {
+        WWW countriesObj = new WWW("http://api.fengyelab.com/api/NcovJsonGetter.php?name=countries");
+        yield return countriesObj;
+        countriesJSON = countriesObj.text;
+        WWW hostObj;
+        hostObj = new WWW("http://api.fengyelab.com/api/NcovJsonGetter.php?name=disease_h5");
+        yield return hostObj;
+        if (hostObj.error != null)
+        {
+            Debug.LogError(hostObj.error);
+        }
+        JsonData raw = JsonMapper.ToObject(hostObj.text);
+        string json = raw[1].ToString();
+        JsonData data = JsonMapper.ToObject(json);//data字段数据
+        JsonData province = JsonMapper.ToObject(data["areaTree"][0]["children"].ToJson());
+        for (int i = 0; i < province.Count; i++)
+        {
+            int proTotal = int.Parse(province[i]["total"]["confirm"].ToString()) / proportion;
+            getPosFromFile(province[i]["name"].ToString(), proTotal);
+        }
+        //中国比较特殊，先获取中国
+        total = int.Parse(data["chinaTotal"][0].ToString()) / proportion;
+        chinaTotal = int.Parse(data["chinaTotal"][0].ToString());
+        Debug.Log("中国确诊总数:" + data["chinaTotal"][0].ToString());
+        //专门针对中国获取一个
+        //this.getPosFromFile("中国", total);
+        /*-----------------国外-----------------*/
+        WWW foreignHostObj = new WWW("http://api.fengyelab.com/api/NcovJsonGetter.php?name=disease_foreign");
+        yield return foreignHostObj;
+        /*遍历所有国家*/
+        if (foreignHostObj.error != null)
+        {
+            Debug.LogError(foreignHostObj.error);
+        }
+        JsonData foreignRaw = JsonMapper.ToObject(foreignHostObj.text);
+        JsonData foreignData = JsonMapper.ToObject(foreignRaw[1].ToString());
+        JsonData foreignList = JsonMapper.ToObject(foreignData["foreignList"].ToJson());
+        JsonData foreignTotalRaw = JsonMapper.ToObject(foreignData["globalStatis"].ToJson());
+        foreignTotal = int.Parse(foreignTotalRaw["confirm"].ToString());//获取海外确诊总数
+        int globalConfirm = chinaTotal + foreignTotal;//全球总确诊
+                                                      // Debug.Log("中国确诊:" + chinaTotal + " 海外确诊: "+ foreignTotal);
+        if (globalConfirm > 700000)
+        {
+            worldText.GetComponent<Text>().text = "全球累计确诊: " + globalConfirm.ToString() + " (截至目前)";
+            cancelLoading();//取消加载
+        }
+
+
+
+        //  Debug.Log(foreignData.Count);
+        for (int i = 0; i < foreignList.Count; i++)
+        {
+            // Debug.Log("国家名称: " + foreignList[i]["name"] + " 确诊人数: " + foreignList[i]["confirm"]);
+            //从服务器获取(暂时弃用)
+            // StartCoroutine(getPosFromServer(foreignList[i]["name"].ToString(),int.Parse(foreignList[i]["confirm"].ToString())));
+            //从本地文件获取
+            total = int.Parse(foreignList[i]["confirm"].ToString()) / proportion;
+            getPosFromFile(foreignList[i]["name"].ToString(), total);
+        }
     }
 
     void Update () {	
@@ -59,6 +145,7 @@ public class ParticleController : MonoBehaviour {
         }
         //中国比较特殊，先获取中国
          total = int.Parse(data["chinaTotal"][0].ToString()) / proportion;
+        chinaTotal = int.Parse(data["chinaTotal"][0].ToString());
         Debug.Log("中国确诊总数:" + data["chinaTotal"][0].ToString());
         //专门针对中国获取一个
        //this.getPosFromFile("中国", total);
@@ -77,11 +164,22 @@ public class ParticleController : MonoBehaviour {
         JsonData foreignRaw = JsonMapper.ToObject(foreignHostObj.text);
         JsonData foreignData = JsonMapper.ToObject(foreignRaw[1].ToString());
         JsonData foreignList = JsonMapper.ToObject(foreignData["foreignList"].ToJson());
+        JsonData foreignTotalRaw = JsonMapper.ToObject(foreignData["globalStatis"].ToJson());
+        foreignTotal = int.Parse(foreignTotalRaw["confirm"].ToString());//获取海外确诊总数
+        int globalConfirm = chinaTotal + foreignTotal;//全球总确诊
+       // Debug.Log("中国确诊:" + chinaTotal + " 海外确诊: "+ foreignTotal);
+        if(globalConfirm > 700000)
+        {
+            worldText.GetComponent<Text>().text = "全球累计确诊: " + globalConfirm.ToString() + " (截至目前)";
+            cancelLoading();//取消加载
+        }
+
+
         
       //  Debug.Log(foreignData.Count);
-       for(int i = 0; i < foreignList.Count; i++)
+       for (int i = 0; i < foreignList.Count; i++)
         {
-            Debug.Log("国家名称: " + foreignList[i]["name"] + " 确诊人数: " + foreignList[i]["confirm"]);
+           // Debug.Log("国家名称: " + foreignList[i]["name"] + " 确诊人数: " + foreignList[i]["confirm"]);
             //从服务器获取(暂时弃用)
             // StartCoroutine(getPosFromServer(foreignList[i]["name"].ToString(),int.Parse(foreignList[i]["confirm"].ToString())));
             //从本地文件获取
@@ -196,5 +294,14 @@ public class ParticleController : MonoBehaviour {
         ps.transform.position = Quaternion.AngleAxis(lng, -Vector3.up) * Quaternion.AngleAxis(lat, -Vector3.right) * new Vector3(0, 0, r); 
         //var em = ps.emission;
         setParticle(total, ps);
+        
     }
+
+    private void cancelLoading()
+    {
+        GameObject loader = GameObject.Find("Loader");
+        loader.GetComponent<Canvas>();
+        loader.SetActive(false);
+    }
+
 }
