@@ -5,8 +5,7 @@ public class BundleCreate
 {
 
     //拓展编辑菜单
-    [MenuItem("AssetsBundle/CreatAssetsBudles")]
-
+    [MenuItem("YTools/CreatAssetsBundles")]
     static void CreateAsset()
     {
 
@@ -14,7 +13,7 @@ public class BundleCreate
         string dir = Application.dataPath + "/AssetBuild";
 
         //将资源中命名的所有资源打包处理（参数：路径，有依附关系，安卓平台）
-        BuildPipeline.BuildAssetBundles(dir, BuildAssetBundleOptions.None, BuildTarget.StandaloneWindows);
+        BuildPipeline.BuildAssetBundles(dir, BuildAssetBundleOptions.None, BuildTarget.WebGL);
 
     }
 

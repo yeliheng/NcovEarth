@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 3102049405
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: countries.bundle
+      Dependencies: {}
