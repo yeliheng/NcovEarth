@@ -1,1 +1,2 @@
 *.cs linguist-language=c#
+*.aspx linguist-language=c#
